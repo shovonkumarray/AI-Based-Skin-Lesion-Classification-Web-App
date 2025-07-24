@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Lesion Classification App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
+        .container { max-width: 600px; margin: 0 auto; text-align: center; }
+        .upload-box { border: 2px dashed #ccc; padding: 20px; margin-bottom: 20px; }
+        input[type="file"] { display: block; margin: 10px auto; }
+        button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        #result { margin-top: 20px; padding: 10px; background-color: #fff; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Skin Lesion Classification</h1>
+        <div class="upload-box">
+            <p>Upload a skin lesion image (JPEG/PNG)</p>
+            <input type="file" id="imageUpload" accept="image/jpeg,image/png">
+            <button onclick="uploadImage()">Classify</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageUpload');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('http://localhost:5000/classify', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                displayResult(data);
+            } catch (error) {
+                console.error('Classification error:', error.message);
+                document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <p><strong>Classification:</strong> ${data.classification}</p>
+                <p><strong>Confidence:</strong> ${data.confidence.toFixed(2)}%</p>
+                <p><strong>Time:</strong> ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}</p>
+            `;
+            if (data.classification === 'Malignant') {
+                resultDiv.innerHTML += '<p style="color: red;">Consult a dermatologist immediately!</p>';
+            }
+        }
+    </script>
+</body>
+</html>
